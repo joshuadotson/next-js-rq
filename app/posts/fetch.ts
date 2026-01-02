@@ -1,0 +1,47 @@
+import type { Post } from "@/lib/mock-data/posts";
+
+export type PostsResponse = {
+  posts: Post[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type PostsParams = {
+  limit?: number;
+  offset?: number;
+  authorId?: string;
+  tag?: string;
+};
+
+export async function fetchPosts(
+  params?: PostsParams,
+  baseUrl?: string
+): Promise<PostsResponse> {
+  console.log("fetchPosts", params, baseUrl);
+  const searchParams = new URLSearchParams();
+  if (params?.limit) searchParams.set("limit", params.limit.toString());
+  if (params?.offset) searchParams.set("offset", params.offset.toString());
+  if (params?.authorId) searchParams.set("authorId", params.authorId);
+  if (params?.tag) searchParams.set("tag", params.tag);
+
+  const url = baseUrl
+    ? `${baseUrl}/api/posts?${searchParams.toString()}`
+    : `/api/posts?${searchParams.toString()}`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  return response.json();
+}
+
+export async function fetchPost(id: string, baseUrl?: string): Promise<Post> {
+  const url = baseUrl ? `${baseUrl}/api/posts/${id}` : `/api/posts/${id}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch post");
+  }
+  return response.json();
+}
+

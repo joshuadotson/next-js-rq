@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { usePosts } from "./usePosts";
 
 export function PostsList() {
-  const { data, isLoading, error } = usePosts();
+  const { data, isLoading, error, refetch, isRefetching } = usePosts();
 
   if (isLoading) {
     return (
@@ -27,10 +28,23 @@ export function PostsList() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+          {data.posts.length} post{data.posts.length !== 1 ? "s" : ""}
+        </span>
+        <button
+          onClick={() => refetch()}
+          disabled={isRefetching}
+          className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isRefetching ? "Refreshing..." : "🔄 Refresh"}
+        </button>
+      </div>
       {data.posts.map((post) => (
-        <div
+        <Link
           key={post.id}
-          className="bg-white dark:bg-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+          href={`/posts/${post.id}`}
+          className="block bg-white dark:bg-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
         >
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
             {post.title}
@@ -53,7 +67,7 @@ export function PostsList() {
               ))}
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   );

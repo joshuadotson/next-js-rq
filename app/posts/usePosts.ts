@@ -1,42 +1,22 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { Post } from "@/lib/mock-data/posts";
+import { fetchPosts, type PostsParams } from "./fetch";
 
-type PostsResponse = {
-  posts: Post[];
-  total: number;
-  limit: number;
-  offset: number;
-};
+export function usePosts(params?: PostsParams) {
+  // Normalize params for query key - filter out undefined values
+  const normalizedParams = params
+    ? Object.fromEntries(
+        Object.entries(params).filter(([_, value]) => value !== undefined)
+      )
+    : undefined;
 
-async function fetchPosts(params?: {
-  limit?: number;
-  offset?: number;
-  authorId?: string;
-  tag?: string;
-}): Promise<PostsResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.limit) searchParams.set("limit", params.limit.toString());
-  if (params?.offset) searchParams.set("offset", params.offset.toString());
-  if (params?.authorId) searchParams.set("authorId", params.authorId);
-  if (params?.tag) searchParams.set("tag", params.tag);
+  const queryKey = normalizedParams
+    ? ["posts", normalizedParams]
+    : ["posts"];
 
-  const response = await fetch(`/api/posts?${searchParams.toString()}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch posts");
-  }
-  return response.json();
-}
-
-export function usePosts(params?: {
-  limit?: number;
-  offset?: number;
-  authorId?: string;
-  tag?: string;
-}) {
   return useQuery({
-    queryKey: ["posts", params],
+    queryKey,
     queryFn: () => fetchPosts(params),
   });
 }
