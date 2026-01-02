@@ -1,4 +1,11 @@
-export default function PostsPage() {
+import { HydrationBoundary } from "@tanstack/react-query";
+import { prefetchPosts } from "./prefetch";
+import { PostsList } from "./PostsList";
+
+export default async function PostsPage() {
+  // Prefetch on the server
+  const dehydratedState = await prefetchPosts();
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -6,17 +13,16 @@ export default function PostsPage() {
           Posts
         </h1>
         <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          This is the posts page. Server state hooks for posts will be organized
-          in <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">features/posts/</code>
+          Server state hooks are colocated with the route in{" "}
+          <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">
+            app/posts/
+          </code>
+          . Data is prefetched on the server and hydrated on the client with no
+          duplication.
         </p>
-        <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-            Post Feed
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Posts will be displayed here using server state hooks.
-          </p>
-        </div>
+        <HydrationBoundary state={dehydratedState}>
+          <PostsList />
+        </HydrationBoundary>
       </div>
     </div>
   );

@@ -12,11 +12,13 @@ alwaysApply: true
 
 ## Directory Structure
 
-### Server State
-- **Location**: `features/[feature-name]/use[Feature].ts` (feature-based organization)
+### Server State (Next.js App Router - Colocated with Routes)
+- **Location**: `app/[route]/use[Feature].ts` (colocated with route)
 - **Purpose**: Data fetched from APIs, cached data, server-side data synchronization
-- **Examples**: `features/users/useUser.ts`, `features/posts/usePosts.ts`, `features/products/useProduct.ts`
-- **Pattern**: Each feature has its own directory with server state hooks
+- **Examples**: `app/posts/usePosts.ts`, `app/users/useUser.ts`, `app/products/useProduct.ts`
+- **Pattern**: Server state hooks are colocated with their route directory
+- **Prefetch Functions**: Server-side prefetch functions should also be colocated: `app/[route]/prefetch.ts`
+- **Grouping**: If a route has more than 3 hooks, group them in `app/[route]/_hooks/` (underscore prefix = private, not a route)
 - **Allowed patterns**: React Query, SWR, server actions, API route handlers
 
 ### UI/Component State
@@ -30,16 +32,20 @@ alwaysApply: true
 ## Strict Rules
 
 ### 1. Server State Rules
-- ✅ **MUST** be organized by feature: `features/[feature-name]/use[Feature].ts`
+- ✅ **MUST** be colocated with route: `app/[route]/use[Feature].ts`
 - ✅ **MUST** use data fetching libraries (React Query, SWR, etc.) or server actions
 - ✅ **MUST** be prefixed with `use` (e.g., `useUser`, `usePosts`, `useProduct`)
 - ✅ **MUST** handle loading, error, and success states
 - ✅ **MUST** be cacheable and shareable across components
-- ✅ **MUST** be placed in feature directories (e.g., `features/users/useUser.ts`)
+- ✅ **MUST** be placed in route directories (e.g., `app/posts/usePosts.ts`)
+- ✅ **MUST** colocate prefetch functions with hooks: `app/[route]/prefetch.ts`
+- ✅ **MUST** group hooks in `_hooks/` subdirectory if route has more than 3 hooks
 - ❌ **NEVER** use `useState` for server-fetched data
 - ❌ **NEVER** mix server state with UI state in the same hook
 - ❌ **NEVER** place server state hooks in component files
 - ❌ **NEVER** use flat directories like `lib/server-state/` or `hooks/server-state/`
+- ❌ **NEVER** use separate `features/` directory - colocate with routes
+- ❌ **NEVER** place prefetch functions in shared `lib/` directories - colocate with route
 
 ### 2. UI/Component State Rules
 - ✅ **MUST** be placed in `hooks/ui-state/` or `hooks/component-state/`
@@ -59,13 +65,13 @@ alwaysApply: true
 - ❌ **NEVER** create ambiguous names (e.g., `useData` - is it server or UI?)
 
 ### 4. Import Rules
-- ✅ **MUST** import server state from feature directories: `features/[feature-name]/use[Feature]`
+- ✅ **MUST** import server state from route directories: `app/[route]/use[Feature]` or relative imports within route
 - ✅ **MUST** import UI state from `hooks/ui-state/` or `hooks/component-state/`
-- ✅ **MUST** use absolute imports or clear relative paths
-- ✅ **MUST** import from feature-based paths (e.g., `from '@/features/users/useUser'`)
+- ✅ **MUST** use relative imports within the same route directory (e.g., `from './usePosts'`)
+- ✅ **MUST** use absolute imports for cross-route imports (e.g., `from '@/app/posts/usePosts'`)
 - ❌ **NEVER** import server state from UI state directories
 - ❌ **NEVER** import UI state from server state directories
-- ❌ **NEVER** import server state from flat directories like `lib/server-state/`
+- ❌ **NEVER** import server state from flat directories like `lib/server-state/` or `features/`
 
 ### 5. Component Usage Rules
 - ✅ **MUST** clearly separate server state hooks from UI state hooks in components
@@ -79,18 +85,26 @@ alwaysApply: true
 
 ## Naming Conventions
 
-### Server State
-- **Directory**: `features/[feature-name]/` (kebab-case for feature names)
+### Server State (Next.js App Router)
+- **Directory**: `app/[route]/` (route directory, kebab-case)
 - **Hooks**: `use[Feature]` (PascalCase, matches feature name)
 - **Files**: `use[Feature].ts` (matches hook name)
 - **Examples**: 
-  - `features/users/useUser.ts` exports `useUser`
-  - `features/posts/usePosts.ts` exports `usePosts`
-  - `features/product-catalog/useProductCatalog.ts` exports `useProductCatalog`
-- **Multiple hooks per feature**: If a feature needs multiple hooks, use descriptive names:
-  - `features/users/useUser.ts` (single user)
-  - `features/users/useUsers.ts` (list of users)
-  - `features/users/useUserMutation.ts` (mutations)
+  - `app/posts/usePosts.ts` exports `usePosts`
+  - `app/users/useUser.ts` exports `useUser`
+  - `app/product-catalog/useProductCatalog.ts` exports `useProductCatalog`
+- **Multiple hooks per route**: 
+  - If 3 or fewer hooks: place directly in route directory
+    - `app/posts/usePosts.ts` (list)
+    - `app/posts/usePost.ts` (single)
+    - `app/posts/usePostMutation.ts` (mutation)
+  - If more than 3 hooks: group in `_hooks/` subdirectory
+    - `app/posts/_hooks/usePosts.ts`
+    - `app/posts/_hooks/usePost.ts`
+    - `app/posts/_hooks/usePostMutation.ts`
+    - `app/posts/_hooks/usePostComments.ts`
+- **Prefetch functions**: Always colocate with route
+  - `app/posts/prefetch.ts` (contains `prefetchPosts`, `prefetchPost`, etc.)
 
 ### UI/Component State
 - Hooks: `use[Feature]State`, `use[Feature]`, `use[Component]State`
@@ -101,17 +115,9 @@ alwaysApply: true
 
 ## Examples
 
-### ✅ CORRECT: Server State (Feature-Based)
+### ✅ CORRECT: Server State (Next.js App Router - Colocated)
 ```typescript
-// features/users/useUser.ts
-export function useUser(userId: string) {
-  return useQuery({
-    queryKey: ['user', userId],
-    queryFn: () => fetchUser(userId),
-  });
-}
-
-// features/posts/usePosts.ts
+// app/posts/usePosts.ts (colocated with route)
 export function usePosts() {
   return useQuery({
     queryKey: ['posts'],
@@ -119,13 +125,27 @@ export function usePosts() {
   });
 }
 
-// features/products/useProduct.ts
-export function useProduct(productId: string) {
+// app/posts/usePost.ts (colocated with route)
+export function usePost(id: string) {
   return useQuery({
-    queryKey: ['product', productId],
-    queryFn: () => fetchProduct(productId),
+    queryKey: ['post', id],
+    queryFn: () => fetchPost(id),
   });
 }
+
+// app/users/useUser.ts (colocated with route)
+export function useUser(userId: string) {
+  return useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+  });
+}
+
+// If more than 3 hooks, group in _hooks/:
+// app/posts/_hooks/usePosts.ts
+// app/posts/_hooks/usePost.ts
+// app/posts/_hooks/usePostMutation.ts
+// app/posts/_hooks/usePostComments.ts
 ```
 
 ### ✅ CORRECT: UI State

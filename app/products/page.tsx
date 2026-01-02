@@ -6,8 +6,10 @@ export default function ProductsPage() {
           Products
         </h1>
         <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          This is the products page. Server state hooks for products will be organized
-          in <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">features/products/</code>
+          Server state hooks are colocated with the route in{" "}
+          <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">
+            app/products/
+          </code>
         </p>
         <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-zinc-800">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">

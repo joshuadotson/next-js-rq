@@ -8,7 +8,7 @@ export default function Home() {
           Welcome to Next RQ
         </h1>
         <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          A Next.js application with feature-based state management organization.
+          A Next.js application with colocated state management following App Router patterns.
         </p>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
@@ -57,7 +57,7 @@ export default function Home() {
             This project follows strict rules for organizing server state and UI state:
           </p>
           <ul className="list-disc list-inside space-y-2 text-zinc-600 dark:text-zinc-400">
-            <li>Server state: <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">features/[feature-name]/use[Feature].ts</code></li>
+            <li>Server state: <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">app/[route]/use[Feature].ts</code> (colocated with route)</li>
             <li>UI state: <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">hooks/ui-state/</code></li>
           </ul>
         </div>
