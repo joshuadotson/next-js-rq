@@ -98,7 +98,7 @@ React Query checks the cache first. It finds data with matching key, sees it's n
 
 This is why query key normalization is critical:
 
-```typescript:app/posts/usePosts.ts
+```typescript:app/posts/_hooks/usePosts.ts
 const normalizedParams = params
   ? Object.fromEntries(
       Object.entries(params).filter(([_, value]) => value !== undefined)

@@ -18,11 +18,10 @@ app/
   posts/
     page.tsx              # Server component - prefetches data
     PostsList.tsx         # Client component - consumes data
-    usePosts.ts           # Server state hook - colocated!
-    usePost.ts            # Single post hook - colocated!
-    useCreatePost.ts      # Create mutation hook - colocated!
-    useUpdatePost.ts      # Update mutation hook - colocated!
-    useDeletePost.ts      # Delete mutation hook - colocated!
+    _hooks/               # Shared hooks (used in multiple pages)
+      usePosts.ts         # List query hook - shared!
+      usePost.ts          # Single post hook - shared!
+      useDeletePost.ts    # Delete mutation hook - shared!
     prefetch.ts           # Prefetch functions - colocated!
     fetch.ts              # Fetch functions - colocated!
     [id]/
@@ -31,9 +30,16 @@ app/
       edit/
         page.tsx          # Server component for edit page
         EditPostForm.tsx  # Client component for edit form
+        useUpdatePost.ts  # Update mutation hook - colocated with edit page!
     new/
       page.tsx            # Client component for create form
+      useCreatePost.ts    # Create mutation hook - colocated with new page!
 ```
+
+**Organization Pattern:**
+- **Shared hooks** (used in multiple pages) → `app/[route]/_hooks/`
+- **Single-use hooks** (used only in one page) → Colocated directly with that page
+- If a specific page has more than 3 hooks, use `app/[route]/[action]/_hooks/`
 
 ## Server State Hooks
 
@@ -43,7 +49,7 @@ Server state hooks are thin wrappers around `useQuery` that:
 2. Call the fetch function
 3. Return the query result
 
-```typescript:app/posts/usePosts.ts
+```typescript:app/posts/_hooks/usePosts.ts
 export function usePosts(params?: PostsParams) {
   const normalizedParams = params
     ? Object.fromEntries(
@@ -73,7 +79,7 @@ Mutation hooks wrap `useMutation` and handle cache updates. This application inc
 
 ### Create Mutation
 
-```typescript:app/posts/useCreatePost.ts
+```typescript:app/posts/new/useCreatePost.ts
 export function useCreatePost() {
   const queryClient = useQueryClient();
   
@@ -94,7 +100,7 @@ export function useCreatePost() {
 
 ### Update Mutation
 
-```typescript:app/posts/useUpdatePost.ts
+```typescript:app/posts/[id]/edit/useUpdatePost.ts
 export function useUpdatePost(id: string) {
   const queryClient = useQueryClient();
   
@@ -115,7 +121,7 @@ export function useUpdatePost(id: string) {
 
 ### Delete Mutation
 
-```typescript:app/posts/useDeletePost.ts
+```typescript:app/posts/_hooks/useDeletePost.ts
 export function useDeletePost() {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -192,6 +198,8 @@ export async function prefetchPosts(params?: PostsParams) {
 Components use hooks without knowing about the implementation:
 
 ```typescript:app/posts/PostsList.tsx
+import { usePosts } from "./_hooks/usePosts";
+
 export function PostsList() {
   const { data, isLoading, error } = usePosts();
   
@@ -238,6 +246,28 @@ store/
 - Unnecessary abstraction
 - Harder to reason about data flow
 
+## Hook Organization Strategy
+
+This application uses a **hybrid colocation pattern**:
+
+1. **Shared hooks** (used in multiple pages) are grouped in `_hooks/` subdirectories at the route level
+   - Example: `app/posts/_hooks/usePosts.ts`, `app/posts/_hooks/usePost.ts`
+   - Use this when there are more than 3 shared hooks in a route
+
+2. **Single-use hooks** (used only in one specific page) are colocated directly with that page
+   - Example: `app/posts/new/useCreatePost.ts`, `app/posts/[id]/edit/useUpdatePost.ts`
+   - Provides better discoverability - the hook is right next to where it's used
+
+3. **Action-level `_hooks/`** (if a specific action has more than 3 hooks)
+   - Example: `app/posts/[id]/edit/_hooks/` if the edit page had 4+ hooks
+   - Use this when a specific page/action has more than 3 hooks
+
+**Benefits:**
+- Shared hooks are easy to find in one place
+- Single-use hooks are discoverable next to their usage
+- Clear separation between shared and page-specific logic
+- Scales well as features grow
+
 ## Summary
 
 Colocating server state with routes creates a clear, maintainable structure where:
@@ -245,4 +275,6 @@ Colocating server state with routes creates a clear, maintainable structure wher
 - Related code lives together
 - It's obvious where to make changes
 - The pattern scales to large applications
+- Shared hooks are grouped for consistency
+- Single-use hooks are discoverable next to their pages
 

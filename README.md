@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 Next RQ is a demonstration application showcasing how to integrate [TanStack Query](https://tanstack.com/query) (React Query) with Next.js App Router. The app demonstrates best practices for managing server state in a Next.js application, including:
 
 - **Server-side prefetching**: Data is prefetched on the server and hydrated on the client with no duplication
-- **Colocated state management**: Server state hooks are organized alongside their routes (e.g., `app/posts/usePosts.ts`)
+- **Colocated state management**: Server state hooks are organized alongside their routes with a hybrid pattern - shared hooks in `_hooks/` subdirectories, single-use hooks colocated with their pages
 - **Optimistic updates**: Mutations use optimistic updates for instant UI feedback
 - **API routes**: Next.js API routes provide a mock backend for posts data
 
