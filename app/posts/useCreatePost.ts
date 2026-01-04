@@ -1,0 +1,83 @@
+"use client";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPost, type CreatePostData, type Post } from "./fetch";
+import type { PostsResponse } from "./fetch";
+
+export function useCreatePost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreatePostData) => createPost(data),
+    onMutate: async (newPostData) => {
+      // Cancel any outgoing refetches to avoid overwriting our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData<PostsResponse>(["posts"]);
+
+      // Generate temporary ID for optimistic post
+      const tempId = `temp-${Date.now()}`;
+      const now = new Date().toISOString();
+      const optimisticPost: Post = {
+        id: tempId,
+        title: newPostData.title,
+        content: newPostData.content,
+        author: newPostData.author,
+        authorId: `user-${newPostData.author.toLowerCase().replace(/\s+/g, "-")}`,
+        createdAt: now,
+        updatedAt: now,
+        tags: [],
+        likes: 0,
+        views: 0,
+      };
+
+      // Optimistically update the cache
+      if (previousData) {
+        queryClient.setQueryData<PostsResponse>(["posts"], {
+          ...previousData,
+          posts: [optimisticPost, ...previousData.posts],
+          total: previousData.total + 1,
+        });
+      } else {
+        // If no previous data, create new cache entry
+        queryClient.setQueryData<PostsResponse>(["posts"], {
+          posts: [optimisticPost],
+          total: 1,
+          limit: 1,
+          offset: 0,
+        });
+      }
+
+      // Return context with snapshot for potential rollback
+      return { previousData };
+    },
+    onError: (err, newPost, context) => {
+      // Rollback to previous value on error
+      if (context?.previousData) {
+        queryClient.setQueryData<PostsResponse>(["posts"], context.previousData);
+      }
+    },
+    onSuccess: (createdPost, newPostData, context) => {
+      // Replace optimistic post with real post from server
+      const currentData = queryClient.getQueryData<PostsResponse>(["posts"]);
+
+      if (currentData) {
+        // Find and replace the optimistic post (with temp ID) with the real one
+        const updatedPosts = currentData.posts.map((post) =>
+          post.id.startsWith("temp-") ? createdPost : post
+        );
+
+        queryClient.setQueryData<PostsResponse>(["posts"], {
+          ...currentData,
+          posts: updatedPosts,
+        });
+      }
+    },
+    onSettled: () => {
+      // Optionally refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+}
+

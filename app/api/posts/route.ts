@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mockPosts } from "@/lib/mock-data/posts";
+import { mockPosts, type Post } from "@/lib/mock-data/posts";
 
 // Simulate network delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,5 +37,57 @@ export async function GET(request: Request) {
     limit: limitNum,
     offset: offsetNum,
   });
+}
+
+export async function POST(request: Request) {
+  // Simulate API delay (100-500ms)
+  await delay(Math.random() * 400 + 100);
+
+  try {
+    const body = await request.json();
+    const { title, content, author } = body;
+
+    if (!title || !content || !author) {
+      return NextResponse.json(
+        { error: "Missing required fields: title, content, author" },
+        { status: 400 }
+      );
+    }
+
+    // Generate new post ID (increment from highest existing ID)
+    const maxId = Math.max(
+      ...mockPosts.map((post) => parseInt(post.id, 10)),
+      0
+    );
+    const newId = (maxId + 1).toString();
+
+    // Generate authorId from author name (simple approach for mock data)
+    const authorId = `user-${author.toLowerCase().replace(/\s+/g, "-")}`;
+
+    // Create new post with current timestamp
+    const now = new Date().toISOString();
+    const newPost: Post = {
+      id: newId,
+      title,
+      content,
+      author,
+      authorId,
+      createdAt: now,
+      updatedAt: now,
+      tags: [],
+      likes: 0,
+      views: 0,
+    };
+
+    // Add to mockPosts array (in-memory, won't persist across server restarts)
+    mockPosts.unshift(newPost); // Add to beginning of array
+
+    return NextResponse.json(newPost, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
+    );
+  }
 }
 

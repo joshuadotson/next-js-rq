@@ -45,3 +45,30 @@ export async function fetchPost(id: string, baseUrl?: string): Promise<Post> {
   return response.json();
 }
 
+export type CreatePostData = {
+  title: string;
+  content: string;
+  author: string;
+};
+
+export async function createPost(
+  data: CreatePostData,
+  baseUrl?: string
+): Promise<Post> {
+  const url = baseUrl ? `${baseUrl}/api/posts` : `/api/posts`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to create post" }));
+    throw new Error(error.error || "Failed to create post");
+  }
+
+  return response.json();
+}
+

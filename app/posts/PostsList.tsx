@@ -22,7 +22,28 @@ export function PostsList() {
 
   if (!data?.posts || data.posts.length === 0) {
     return (
-      <div className="text-zinc-600 dark:text-zinc-400">No posts found.</div>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            No posts found.
+          </span>
+          <div className="flex gap-2">
+            <Link
+              href="/posts/new"
+              className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+            >
+              + Create Post
+            </Link>
+            <button
+              onClick={() => refetch()}
+              disabled={isRefetching}
+              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRefetching ? "Refreshing..." : "🔄 Refresh"}
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -32,13 +53,21 @@ export function PostsList() {
         <span className="text-sm text-zinc-600 dark:text-zinc-400">
           {data.posts.length} post{data.posts.length !== 1 ? "s" : ""}
         </span>
-        <button
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isRefetching ? "Refreshing..." : "🔄 Refresh"}
-        </button>
+        <div className="flex gap-2">
+          <Link
+            href="/posts/new"
+            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+          >
+            + Create Post
+          </Link>
+          <button
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRefetching ? "Refreshing..." : "🔄 Refresh"}
+          </button>
+        </div>
       </div>
       {data.posts.map((post) => (
         <Link
