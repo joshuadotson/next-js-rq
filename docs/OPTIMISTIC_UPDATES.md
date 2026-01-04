@@ -155,28 +155,99 @@ The rollback mechanism ensures:
 - ✅ Components don't need to handle loading/error states for optimistic updates
 - ✅ React Query Devtools show the optimistic state
 
+## Update and Delete Mutations
+
+This application also uses optimistic updates for **update** and **delete** operations:
+
+### Update Mutation
+
+The `useUpdatePost` hook updates both the individual post cache and all posts list caches:
+
+```typescript:app/posts/useUpdatePost.ts
+onMutate: async (updatedData) => {
+  // Cancel queries
+  await queryClient.cancelQueries({ queryKey: ["post", id] });
+  await queryClient.cancelQueries({ queryKey: ["posts"] });
+  
+  // Update individual post cache
+  queryClient.setQueryData<Post>(["post", id], optimisticPost);
+  
+  // Update ALL posts list caches (handles query keys with params)
+  queryClient.setQueriesData<PostsResponse>(
+    { queryKey: ["posts"] },
+    (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        posts: oldData.posts.map((post) =>
+          post.id === id ? optimisticPost : post
+        ),
+      };
+    }
+  );
+}
+```
+
+**Key point**: Using `setQueriesData` ensures all posts queries (with or without params) are updated, not just the base `["posts"]` query.
+
+### Delete Mutation
+
+The `useDeletePost` hook removes the post from all caches and navigates away:
+
+```typescript:app/posts/useDeletePost.ts
+onMutate: async (id) => {
+  // Remove from posts list cache
+  queryClient.setQueriesData<PostsResponse>(
+    { queryKey: ["posts"] },
+    (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        posts: oldData.posts.filter((post) => post.id !== id),
+        total: oldData.total - 1,
+      };
+    }
+  );
+  
+  // Remove individual post cache
+  queryClient.removeQueries({ queryKey: ["post", id] });
+}
+
+onSuccess: (_data, id) => {
+  // Navigate to posts list after successful deletion
+  router.push("/posts");
+}
+```
+
 ## When to Use Optimistic Updates
 
 **Good candidates:**
 - ✅ Creating new items (posts, comments, etc.)
+- ✅ Updating existing items (with proper rollback)
+- ✅ Deleting items (with confirmation dialog and navigation)
 - ✅ Toggling boolean states (like/unlike)
-- ✅ Simple updates that are likely to succeed
+- ✅ Simple operations that are likely to succeed
 
-**Avoid for:**
-- ❌ Destructive operations (delete, where rollback is confusing)
-- ❌ Complex validations (where failure is likely)
-- ❌ Operations that depend on server-side calculations
+**Consider carefully:**
+- ⚠️ Complex validations (where failure is likely)
+- ⚠️ Operations that depend on server-side calculations
+- ⚠️ Operations where rollback would be confusing (use confirmation dialogs)
 
 ## Testing Optimistic Updates
 
 You can test the rollback by:
 
 1. Opening React Query Devtools
-2. Creating a post
+2. Creating, updating, or deleting a post
 3. In DevTools, manually fail the mutation
 4. Observe the UI rollback
 
 Or simulate a network error in the browser DevTools Network tab.
+
+**Try it:**
+- Edit a post and watch it update in both the detail page and the list immediately
+- Delete a post and see it disappear instantly, then navigate to the list
+- If a mutation fails, watch the UI rollback to the previous state
 
 ## Summary
 

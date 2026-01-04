@@ -11,7 +11,7 @@ Next RQ is a demonstration application showcasing how to integrate [TanStack Que
 
 ### Features
 
-- **Posts Management**: Browse, view, and create posts with filtering and pagination support
+- **Posts Management**: Full CRUD operations - browse, view, create, edit, and delete posts with filtering and pagination support
 - **Server State Hooks**: Custom React Query hooks colocated with routes for better organization
 - **React Query Devtools**: Built-in devtools for debugging queries and mutations
 - **Modern UI**: Clean, responsive interface built with Tailwind CSS

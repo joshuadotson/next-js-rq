@@ -19,12 +19,20 @@ app/
     page.tsx              # Server component - prefetches data
     PostsList.tsx         # Client component - consumes data
     usePosts.ts           # Server state hook - colocated!
-    useCreatePost.ts      # Mutation hook - colocated!
+    usePost.ts            # Single post hook - colocated!
+    useCreatePost.ts      # Create mutation hook - colocated!
+    useUpdatePost.ts      # Update mutation hook - colocated!
+    useDeletePost.ts      # Delete mutation hook - colocated!
     prefetch.ts           # Prefetch functions - colocated!
     fetch.ts              # Fetch functions - colocated!
     [id]/
       page.tsx            # Server component for detail page
       PostDetail.tsx      # Client component for detail page
+      edit/
+        page.tsx          # Server component for edit page
+        EditPostForm.tsx  # Client component for edit form
+    new/
+      page.tsx            # Client component for create form
 ```
 
 ## Server State Hooks
@@ -61,7 +69,9 @@ export function usePosts(params?: PostsParams) {
 
 ## Mutation Hooks
 
-Mutation hooks wrap `useMutation` and handle cache updates:
+Mutation hooks wrap `useMutation` and handle cache updates. This application includes three mutation hooks:
+
+### Create Mutation
 
 ```typescript:app/posts/useCreatePost.ts
 export function useCreatePost() {
@@ -70,7 +80,7 @@ export function useCreatePost() {
   return useMutation({
     mutationFn: (data: CreatePostData) => createPost(data),
     onMutate: async (newPostData) => {
-      // Optimistic update logic
+      // Optimistic update logic - adds post to list
     },
     onError: (err, newPost, context) => {
       // Rollback on error
@@ -82,10 +92,52 @@ export function useCreatePost() {
 }
 ```
 
+### Update Mutation
+
+```typescript:app/posts/useUpdatePost.ts
+export function useUpdatePost(id: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: UpdatePostData) => updatePost(id, data),
+    onMutate: async (updatedData) => {
+      // Updates both individual post and all posts list caches
+      queryClient.setQueriesData({ queryKey: ["posts"] }, ...);
+    },
+    onSuccess: (updatedPost) => {
+      // Replaces optimistic data with server response
+    },
+  });
+}
+```
+
+**Key point**: Uses `setQueriesData` to update all posts queries (with or without params), ensuring the list always reflects updates.
+
+### Delete Mutation
+
+```typescript:app/posts/useDeletePost.ts
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  
+  return useMutation({
+    mutationFn: (id: string) => deletePost(id),
+    onMutate: async (id) => {
+      // Removes post from all caches optimistically
+    },
+    onSuccess: (_data, id) => {
+      // Navigates to posts list after deletion
+      router.push("/posts");
+    },
+  });
+}
+```
+
 **Benefits:**
 - Cache update logic is encapsulated
 - Components just call `mutate()` - no cache management needed
 - Easy to add optimistic updates, error handling, etc.
+- All mutations handle multiple query keys automatically
 
 ## Fetch Functions
 
