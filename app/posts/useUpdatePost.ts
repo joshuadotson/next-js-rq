@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updatePost, type UpdatePostData } from "./fetch";
 import type { PostsResponse } from "./fetch";
 import type { Post } from "@/lib/mock-data/posts";
+import type { UsersResponse } from "@/app/users/fetch";
 
 export function useUpdatePost(id: string) {
   const queryClient = useQueryClient();
@@ -24,22 +25,29 @@ export function useUpdatePost(id: string) {
       });
       const previousPostsQueries = new Map(allPostsQueries);
 
+      // Try to get user name from users cache for optimistic update
+      const usersData = queryClient.getQueryData<UsersResponse>(["users"]);
+      const user = usersData?.users.find((u) => u.id === updatedData.authorId);
+      const authorName = user
+        ? `${user.firstName} ${user.lastName}`
+        : previousPost?.author || "Loading...";
+
       // Create optimistic post
       const optimisticPost: Post = previousPost
         ? {
             ...previousPost,
             title: updatedData.title,
             content: updatedData.content,
-            author: updatedData.author,
-            authorId: `user-${updatedData.author.toLowerCase().replace(/\s+/g, "-")}`,
+            author: authorName,
+            authorId: updatedData.authorId,
             updatedAt: new Date().toISOString(),
           }
         : {
             id,
             title: updatedData.title,
             content: updatedData.content,
-            author: updatedData.author,
-            authorId: `user-${updatedData.author.toLowerCase().replace(/\s+/g, "-")}`,
+            author: authorName,
+            authorId: updatedData.authorId,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             tags: [],

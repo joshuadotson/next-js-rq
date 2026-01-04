@@ -47,7 +47,7 @@ export async function fetchPost(id: string, baseUrl?: string): Promise<Post> {
 export type CreatePostData = {
   title: string;
   content: string;
-  author: string;
+  authorId: string;
 };
 
 export async function createPost(
@@ -74,7 +74,7 @@ export async function createPost(
 export type UpdatePostData = {
   title: string;
   content: string;
-  author: string;
+  authorId: string;
 };
 
 export async function updatePost(

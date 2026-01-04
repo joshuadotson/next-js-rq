@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { mockPosts, type Post } from "@/lib/mock-data/posts";
+import { mockUsers } from "@/lib/mock-data/users";
 
 // Simulate network delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -43,17 +44,28 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { title, content, author } = body;
+    const { title, content, authorId } = body;
 
-    if (!title || !content || !author) {
+    if (!title || !content || !authorId) {
       return NextResponse.json(
-        { error: "Missing required fields: title, content, author" },
+        { error: "Missing required fields: title, content, authorId" },
         { status: 400 }
       );
     }
 
+    // Validate that authorId exists in mockUsers
+    const user = mockUsers.find((u) => u.id === authorId);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid authorId: user not found" },
+        { status: 400 }
+      );
+    }
+
+    // Derive author name from user data
+    const author = `${user.firstName} ${user.lastName}`;
+
     const existingPost = mockPosts[postIndex];
-    const authorId = `user-${author.toLowerCase().replace(/\s+/g, "-")}`;
     const now = new Date().toISOString();
 
     const updatedPost: Post = {

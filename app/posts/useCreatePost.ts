@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPost, type CreatePostData, type Post } from "./fetch";
 import type { PostsResponse } from "./fetch";
+import type { User } from "@/lib/mock-data/users";
+import type { UsersResponse } from "@/app/users/fetch";
 
 export function useCreatePost() {
   const queryClient = useQueryClient();
@@ -16,6 +18,13 @@ export function useCreatePost() {
       // Snapshot the previous value
       const previousData = queryClient.getQueryData<PostsResponse>(["posts"]);
 
+      // Try to get user name from users cache for optimistic update
+      const usersData = queryClient.getQueryData<UsersResponse>(["users"]);
+      const user = usersData?.users.find((u) => u.id === newPostData.authorId);
+      const authorName = user
+        ? `${user.firstName} ${user.lastName}`
+        : "Loading...";
+
       // Generate temporary ID for optimistic post
       const tempId = `temp-${Date.now()}`;
       const now = new Date().toISOString();
@@ -23,8 +32,8 @@ export function useCreatePost() {
         id: tempId,
         title: newPostData.title,
         content: newPostData.content,
-        author: newPostData.author,
-        authorId: `user-${newPostData.author.toLowerCase().replace(/\s+/g, "-")}`,
+        author: authorName,
+        authorId: newPostData.authorId,
         createdAt: now,
         updatedAt: now,
         tags: [],
