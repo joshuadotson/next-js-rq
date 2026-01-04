@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateUser, type UpdateUserData } from "../../fetch";
-import type { UsersResponse } from "../../fetch";
+import { updateUser, type UpdateUserData } from "../fetch";
+import type { UsersResponse } from "../fetch";
 import type { User } from "@/lib/mock-data/users";
 
 export function useUpdateUser(id: string) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateProduct, type UpdateProductData } from "../../fetch";
-import type { ProductsResponse } from "../../fetch";
+import { updateProduct, type UpdateProductData } from "../fetch";
+import type { ProductsResponse } from "../fetch";
 import type { Product } from "@/lib/mock-data/products";
 
 export function useUpdateProduct(id: string) {

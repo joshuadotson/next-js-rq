@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCreatePost } from "./useCreatePost";
+import { useCreatePost } from "../_hooks/useCreatePost";
 import { useUsers } from "@/app/users/_hooks/useUsers";
 
 export default function NewPostPage() {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useUpdateUser } from "./useUpdateUser";
+import { useUpdateUser } from "../../_hooks/useUpdateUser";
 import { useUser } from "../../_hooks/useUser";
 
 export function EditUserForm({ id }: { id: string }) {

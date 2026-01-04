@@ -13,17 +13,20 @@ alwaysApply: true
 ## Directory Structure
 
 ### Server State (Next.js App Router - Colocated with Routes)
-- **Location**: `app/[route]/use[Feature].ts` (colocated with route)
+- **Location**: `app/[route]/_hooks/` (all hooks in feature `_hooks` folder)
 - **Purpose**: Data fetched from APIs, cached data, server-side data synchronization
-- **Examples**: `app/posts/usePosts.ts`, `app/users/useUser.ts`, `app/products/useProduct.ts`
-- **Pattern**: Server state hooks are colocated with their route directory
-- **Prefetch Functions**: Server-side prefetch functions should also be colocated: `app/[route]/prefetch.ts`
+- **Examples**: `app/posts/_hooks/usePosts.ts`, `app/users/_hooks/useUser.ts`, `app/products/_hooks/useProduct.ts`
+- **Pattern**: All server state hooks for a feature are centralized in `app/[route]/_hooks/`
+- **Prefetch Functions**: Server-side prefetch functions should be colocated: `app/[route]/prefetch.ts`
 - **Grouping**: 
-  - Use `_hooks/` at the **route root** (`app/[route]/_hooks/`) if there are more than 3 **shared hooks** (used across multiple pages in the route)
-  - Use `_hooks/` at the **action/page level** (`app/[route]/[action]/_hooks/`) if a specific action has more than 3 hooks specific to that action
-  - Otherwise, colocate hooks directly with their page for better discoverability
-  - **Shared hooks** (used in multiple places within the route) should be in `app/[route]/_hooks/`
-  - **Single-use hooks** (used only in one specific page) should be colocated with that page, unless that page has more than 3 hooks (then use `_hooks/` at that page level)
+  - **All hooks** (queries and mutations) for a feature should be in `app/[route]/_hooks/`
+  - This includes:
+    - Query hooks: `usePosts`, `usePost`, `useUsers`, `useUser`, etc.
+    - Mutation hooks: `useCreatePost`, `useUpdatePost`, `useDeletePost`, etc.
+  - This pattern provides:
+    - Single location for all feature hooks (easier to find and maintain)
+    - Consistent organization across features
+    - Better discoverability for developers
 - **Allowed patterns**: React Query, SWR, server actions, API route handlers
 
 ### UI/Component State
@@ -37,23 +40,21 @@ alwaysApply: true
 ## Strict Rules
 
 ### 1. Server State Rules
-- ✅ **MUST** be colocated with route: `app/[route]/use[Feature].ts`
+- ✅ **MUST** be in feature `_hooks/` folder: `app/[route]/_hooks/use[Feature].ts`
 - ✅ **MUST** use data fetching libraries (React Query, SWR, etc.) or server actions
 - ✅ **MUST** be prefixed with `use` (e.g., `useUser`, `usePosts`, `useProduct`)
 - ✅ **MUST** handle loading, error, and success states
 - ✅ **MUST** be cacheable and shareable across components
-- ✅ **MUST** be placed in route directories (e.g., `app/posts/usePosts.ts`)
-- ✅ **MUST** colocate prefetch functions with hooks: `app/[route]/prefetch.ts`
-- ✅ **MUST** use `_hooks/` at route root (`app/[route]/_hooks/`) if there are more than 3 shared hooks (used across multiple pages)
-- ✅ **MUST** use `_hooks/` at action/page level (`app/[route]/[action]/_hooks/`) if a specific action has more than 3 hooks specific to that action
-- ✅ **SHOULD** colocate single-use hooks directly with their page if that page has 3 or fewer hooks (e.g., `app/posts/new/useCreatePost.ts`)
-- ✅ **SHOULD** keep shared hooks (used in multiple pages) in `app/[route]/_hooks/` for consistency
+- ✅ **MUST** place all hooks (queries and mutations) in `app/[route]/_hooks/`
+- ✅ **MUST** colocate prefetch functions with route: `app/[route]/prefetch.ts`
+- ✅ **SHOULD** group all feature hooks together for consistency and discoverability
 - ❌ **NEVER** use `useState` for server-fetched data
 - ❌ **NEVER** mix server state with UI state in the same hook
 - ❌ **NEVER** place server state hooks in component files
 - ❌ **NEVER** use flat directories like `lib/server-state/` or `hooks/server-state/`
 - ❌ **NEVER** use separate `features/` directory - colocate with routes
 - ❌ **NEVER** place prefetch functions in shared `lib/` directories - colocate with route
+- ❌ **NEVER** scatter mutation hooks in route subdirectories - keep all hooks in `_hooks/`
 
 ### 2. UI/Component State Rules
 - ✅ **MUST** be placed in `hooks/ui-state/` or `hooks/component-state/`
@@ -68,15 +69,15 @@ alwaysApply: true
 - ✅ **MUST** create separate files for each hook/utility
 - ✅ **MUST** use clear, descriptive names that indicate state type
 - ✅ **MUST** export hooks with explicit names (no default exports for hooks)
-- ✅ **MUST** group related hooks in subdirectories if needed
+- ✅ **MUST** group all feature hooks in `app/[route]/_hooks/` directory
 - ❌ **NEVER** mix server and UI state in the same file
 - ❌ **NEVER** create ambiguous names (e.g., `useData` - is it server or UI?)
 
 ### 4. Import Rules
-- ✅ **MUST** import server state from route directories: `app/[route]/use[Feature]` or relative imports within route
+- ✅ **MUST** import server state from feature `_hooks/` directory: `app/[route]/_hooks/use[Feature]`
 - ✅ **MUST** import UI state from `hooks/ui-state/` or `hooks/component-state/`
-- ✅ **MUST** use relative imports within the same route directory (e.g., `from './usePosts'`)
-- ✅ **MUST** use absolute imports for cross-route imports (e.g., `from '@/app/posts/usePosts'`)
+- ✅ **MUST** use relative imports within the same route directory (e.g., `from '../_hooks/usePosts'`)
+- ✅ **MUST** use absolute imports for cross-route imports (e.g., `from '@/app/posts/_hooks/usePosts'`)
 - ❌ **NEVER** import server state from UI state directories
 - ❌ **NEVER** import UI state from server state directories
 - ❌ **NEVER** import server state from flat directories like `lib/server-state/` or `features/`
@@ -94,31 +95,20 @@ alwaysApply: true
 ## Naming Conventions
 
 ### Server State (Next.js App Router)
-- **Directory**: `app/[route]/` (route directory, kebab-case)
+- **Directory**: `app/[route]/_hooks/` (all hooks in feature `_hooks` folder)
 - **Hooks**: `use[Feature]` (PascalCase, matches feature name)
 - **Files**: `use[Feature].ts` (matches hook name)
 - **Examples**: 
-  - `app/posts/usePosts.ts` exports `usePosts`
-  - `app/users/useUser.ts` exports `useUser`
-  - `app/product-catalog/useProductCatalog.ts` exports `useProductCatalog`
-- **Multiple hooks per route**: 
-  - If 3 or fewer hooks total: place directly in route directory
-    - `app/posts/usePosts.ts` (list)
-    - `app/posts/usePost.ts` (single)
-    - `app/posts/usePostMutation.ts` (mutation)
-  - If more than 3 **shared hooks** (used across multiple pages): group in route root `_hooks/`
-    - `app/posts/_hooks/usePosts.ts` (used in list page, could be used elsewhere)
-    - `app/posts/_hooks/usePost.ts` (used in detail and edit pages)
-    - `app/posts/_hooks/useDeletePost.ts` (used in detail page, could be used elsewhere)
-  - **Single-use hooks** (used only in one specific page):
-    - If that page has 3 or fewer hooks: colocate directly with the page
-      - `app/posts/new/useCreatePost.ts` (only used in `/posts/new`, 1 hook total)
-      - `app/posts/[id]/edit/useUpdatePost.ts` (only used in `/posts/[id]/edit`, 1 hook total)
-    - If that page has more than 3 hooks: use `_hooks/` at that page level
-      - `app/posts/[id]/edit/_hooks/useUpdatePost.ts`
-      - `app/posts/[id]/edit/_hooks/usePostValidation.ts`
-      - `app/posts/[id]/edit/_hooks/usePostHistory.ts`
-      - `app/posts/[id]/edit/_hooks/usePostPermissions.ts`
+  - `app/posts/_hooks/usePosts.ts` exports `usePosts` (list query)
+  - `app/posts/_hooks/usePost.ts` exports `usePost` (single item query)
+  - `app/posts/_hooks/useCreatePost.ts` exports `useCreatePost` (create mutation)
+  - `app/posts/_hooks/useUpdatePost.ts` exports `useUpdatePost` (update mutation)
+  - `app/posts/_hooks/useDeletePost.ts` exports `useDeletePost` (delete mutation)
+  - `app/users/_hooks/useUser.ts` exports `useUser`
+  - `app/product-catalog/_hooks/useProductCatalog.ts` exports `useProductCatalog`
+- **All hooks per route**: All hooks (queries and mutations) should be in `app/[route]/_hooks/`
+  - Query hooks: `usePosts.ts`, `usePost.ts`
+  - Mutation hooks: `useCreatePost.ts`, `useUpdatePost.ts`, `useDeletePost.ts`
 - **Prefetch functions**: Always colocate with route
   - `app/posts/prefetch.ts` (contains `prefetchPosts`, `prefetchPost`, etc.)
 
@@ -131,9 +121,10 @@ alwaysApply: true
 
 ## Examples
 
-### ✅ CORRECT: Server State (Next.js App Router - Colocated)
+### ✅ CORRECT: Server State (All Hooks in Feature `_hooks/` Folder)
 ```typescript
-// app/posts/usePosts.ts (colocated with route)
+// All hooks centralized in app/posts/_hooks/
+// app/posts/_hooks/usePosts.ts (list query)
 export function usePosts() {
   return useQuery({
     queryKey: ['posts'],
@@ -141,7 +132,7 @@ export function usePosts() {
   });
 }
 
-// app/posts/usePost.ts (colocated with route)
+// app/posts/_hooks/usePost.ts (single item query)
 export function usePost(id: string) {
   return useQuery({
     queryKey: ['post', id],
@@ -149,28 +140,28 @@ export function usePost(id: string) {
   });
 }
 
-// app/users/useUser.ts (colocated with route)
-export function useUser(userId: string) {
-  return useQuery({
-    queryKey: ['user', userId],
-    queryFn: () => fetchUser(userId),
-  });
+// app/posts/_hooks/useCreatePost.ts (create mutation)
+export function useCreatePost() {
+  // ... mutation logic
 }
 
-// Route-level _hooks/ for shared hooks (more than 3 shared hooks):
-// app/posts/_hooks/usePosts.ts (used in multiple places)
-// app/posts/_hooks/usePost.ts (used in detail and edit pages)
-// app/posts/_hooks/useDeletePost.ts (used in detail page)
+// app/posts/_hooks/useUpdatePost.ts (update mutation)
+export function useUpdatePost(id: string) {
+  // ... mutation logic
+}
 
-// Page-level colocation (3 or fewer hooks for that page):
-// app/posts/new/useCreatePost.ts (only used in /posts/new, 1 hook)
-// app/posts/[id]/edit/useUpdatePost.ts (only used in /posts/[id]/edit, 1 hook)
+// app/posts/_hooks/useDeletePost.ts (delete mutation)
+export function useDeletePost() {
+  // ... mutation logic
+}
 
-// Page-level _hooks/ (more than 3 hooks specific to that action):
-// app/posts/[id]/edit/_hooks/useUpdatePost.ts
-// app/posts/[id]/edit/_hooks/usePostValidation.ts
-// app/posts/[id]/edit/_hooks/usePostHistory.ts
-// app/posts/[id]/edit/_hooks/usePostPermissions.ts
+// Usage in components:
+// app/posts/new/page.tsx
+import { useCreatePost } from "../_hooks/useCreatePost";
+
+// app/posts/[id]/edit/EditPostForm.tsx
+import { useUpdatePost } from "../../_hooks/useUpdatePost";
+import { usePost } from "../../_hooks/usePost";
 ```
 
 ### ✅ CORRECT: UI State
@@ -196,9 +187,25 @@ export function useUser(userId: string) {
 
 ---
 
+### ❌ INCORRECT: Scattering Hooks
+```typescript
+// DON'T DO THIS - hooks scattered across route subdirectories
+// app/posts/new/useCreatePost.ts ❌
+// app/posts/[id]/edit/useUpdatePost.ts ❌
+// app/posts/_hooks/useDeletePost.ts ❌
+
+// DO THIS - all hooks in _hooks/
+// app/posts/_hooks/useCreatePost.ts ✅
+// app/posts/_hooks/useUpdatePost.ts ✅
+// app/posts/_hooks/useDeletePost.ts ✅
+```
+
+---
+
 ## Enforcement
 - Always check directory structure before creating state management code
 - Always verify imports match the state type
 - Always use appropriate patterns for each state type
 - Always separate concerns - one hook, one responsibility
+- Always place all feature hooks in `app/[route]/_hooks/` for consistency
 

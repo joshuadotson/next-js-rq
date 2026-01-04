@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCreateUser } from "./useCreateUser";
+import { useCreateUser } from "../_hooks/useCreateUser";
 
 export default function NewUserPage() {
   const router = useRouter();

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useUpdatePost } from "./useUpdatePost";
+import { useUpdatePost } from "../../_hooks/useUpdatePost";
 import { usePost } from "../../_hooks/usePost";
 import { useUsers } from "@/app/users/_hooks/useUsers";
 

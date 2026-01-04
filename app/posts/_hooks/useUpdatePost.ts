@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updatePost, type UpdatePostData } from "../../fetch";
-import type { PostsResponse } from "../../fetch";
+import { updatePost, type UpdatePostData } from "../fetch";
+import type { PostsResponse } from "../fetch";
 import type { Post } from "@/lib/mock-data/posts";
 import type { UsersResponse } from "@/app/users/fetch";
 
