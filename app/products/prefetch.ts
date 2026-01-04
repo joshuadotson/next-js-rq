@@ -1,4 +1,5 @@
 import { getQueryClient } from "@/lib/react-query/query-client";
+import { createQueryKey } from "@/lib/react-query/query-keys";
 import { dehydrate } from "@tanstack/react-query";
 import { fetchProducts, fetchProduct, type ProductsParams, type ProductsResponse } from "./fetch";
 import type { Product } from "@/lib/mock-data/products";
@@ -9,16 +10,7 @@ export async function prefetchProducts(params?: ProductsParams) {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-  // Normalize params for query key - filter out undefined values
-  const normalizedParams = params
-    ? Object.fromEntries(
-        Object.entries(params).filter(([_, value]) => value !== undefined)
-      )
-    : undefined;
-
-  const queryKey = normalizedParams
-    ? ["products", normalizedParams]
-    : ["products"];
+  const queryKey = createQueryKey("products", params);
 
   await queryClient.prefetchQuery({
     queryKey,

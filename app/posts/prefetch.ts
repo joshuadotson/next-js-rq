@@ -1,4 +1,5 @@
 import { getQueryClient } from "@/lib/react-query/query-client";
+import { createQueryKey } from "@/lib/react-query/query-keys";
 import { dehydrate } from "@tanstack/react-query";
 import { fetchPosts, fetchPost, type PostsParams, type PostsResponse } from "./fetch";
 import type { Post } from "@/lib/mock-data/posts";
@@ -9,16 +10,7 @@ export async function prefetchPosts(params?: PostsParams) {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-  // Normalize params for query key - filter out undefined values
-  const normalizedParams = params
-    ? Object.fromEntries(
-        Object.entries(params).filter(([_, value]) => value !== undefined)
-      )
-    : undefined;
-
-  const queryKey = normalizedParams
-    ? ["posts", normalizedParams]
-    : ["posts"];
+  const queryKey = createQueryKey("posts", params);
 
   await queryClient.prefetchQuery({
     queryKey,

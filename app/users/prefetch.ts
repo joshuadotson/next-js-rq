@@ -1,4 +1,5 @@
 import { getQueryClient } from "@/lib/react-query/query-client";
+import { createQueryKey } from "@/lib/react-query/query-keys";
 import { dehydrate } from "@tanstack/react-query";
 import { fetchUsers, fetchUser, type UsersParams, type UsersResponse } from "./fetch";
 import type { User } from "@/lib/mock-data/users";
@@ -9,16 +10,7 @@ export async function prefetchUsers(params?: UsersParams) {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-  // Normalize params for query key - filter out undefined values
-  const normalizedParams = params
-    ? Object.fromEntries(
-        Object.entries(params).filter(([_, value]) => value !== undefined)
-      )
-    : undefined;
-
-  const queryKey = normalizedParams
-    ? ["users", normalizedParams]
-    : ["users"];
+  const queryKey = createQueryKey("users", params);
 
   await queryClient.prefetchQuery({
     queryKey,
