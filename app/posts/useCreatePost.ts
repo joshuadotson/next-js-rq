@@ -52,13 +52,13 @@ export function useCreatePost() {
       // Return context with snapshot for potential rollback
       return { previousData };
     },
-    onError: (err, newPost, context) => {
+    onError: (_err, _newPost, context) => {
       // Rollback to previous value on error
       if (context?.previousData) {
         queryClient.setQueryData<PostsResponse>(["posts"], context.previousData);
       }
     },
-    onSuccess: (createdPost, newPostData, context) => {
+    onSuccess: (createdPost) => {
       // Replace optimistic post with real post from server
       const currentData = queryClient.getQueryData<PostsResponse>(["posts"]);
 

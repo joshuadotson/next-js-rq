@@ -18,7 +18,6 @@ export async function fetchPosts(
   params?: PostsParams,
   baseUrl?: string
 ): Promise<PostsResponse> {
-  console.log("fetchPosts", params, baseUrl);
   const searchParams = new URLSearchParams();
   if (params?.limit) searchParams.set("limit", params.limit.toString());
   if (params?.offset) searchParams.set("offset", params.offset.toString());
