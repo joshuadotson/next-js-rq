@@ -5,6 +5,16 @@ import { mockUsers } from "@/lib/mock-data/users";
 // Simulate network delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Helper function to enrich post with current author name
+function enrichPostWithAuthor(post: Omit<Post, "author"> & { author?: string }): Post {
+  const user = mockUsers.find((u) => u.id === post.authorId);
+  const author = user ? `${user.firstName} ${user.lastName}` : "Unknown Author";
+  return {
+    ...post,
+    author,
+  };
+}
+
 export async function GET(request: Request) {
   // Simulate API delay (100-500ms)
   await delay(Math.random() * 400 + 100);
@@ -32,8 +42,11 @@ export async function GET(request: Request) {
   const limitNum = limit ? parseInt(limit, 10) : filteredPosts.length;
   const paginatedPosts = filteredPosts.slice(offsetNum, offsetNum + limitNum);
 
+  // Enrich posts with current author names
+  const enrichedPosts = paginatedPosts.map(enrichPostWithAuthor);
+
   return NextResponse.json({
-    posts: paginatedPosts,
+    posts: enrichedPosts,
     total: filteredPosts.length,
     limit: limitNum,
     offset: offsetNum,
@@ -64,9 +77,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Derive author name from user data
-    const author = `${user.firstName} ${user.lastName}`;
-
     // Generate new post ID (increment from highest existing ID)
     const maxId = Math.max(
       ...mockPosts.map((post) => parseInt(post.id, 10)),
@@ -75,12 +85,12 @@ export async function POST(request: Request) {
     const newId = (maxId + 1).toString();
 
     // Create new post with current timestamp
+    // Note: We don't store author name - it will be derived dynamically
     const now = new Date().toISOString();
-    const newPost: Post = {
+    const newPost: Omit<Post, "author"> = {
       id: newId,
       title,
       content,
-      author,
       authorId,
       createdAt: now,
       updatedAt: now,
@@ -90,9 +100,12 @@ export async function POST(request: Request) {
     };
 
     // Add to mockPosts array (in-memory, won't persist across server restarts)
-    mockPosts.unshift(newPost); // Add to beginning of array
+    // Type assertion needed since we're storing without author
+    mockPosts.unshift(newPost as Post);
 
-    return NextResponse.json(newPost, { status: 201 });
+    // Return enriched post with current author name
+    const enrichedPost = enrichPostWithAuthor(newPost);
+    return NextResponse.json(enrichedPost, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { error: "Invalid request body" },

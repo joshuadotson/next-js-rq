@@ -5,6 +5,16 @@ import { mockUsers } from "@/lib/mock-data/users";
 // Simulate network delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Helper function to enrich post with current author name
+function enrichPostWithAuthor(post: Omit<Post, "author"> & { author?: string }): Post {
+  const user = mockUsers.find((u) => u.id === post.authorId);
+  const author = user ? `${user.firstName} ${user.lastName}` : "Unknown Author";
+  return {
+    ...post,
+    author,
+  };
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -22,7 +32,9 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(post);
+  // Return enriched post with current author name
+  const enrichedPost = enrichPostWithAuthor(post);
+  return NextResponse.json(enrichedPost);
 }
 
 export async function PUT(
@@ -62,24 +74,23 @@ export async function PUT(
       );
     }
 
-    // Derive author name from user data
-    const author = `${user.firstName} ${user.lastName}`;
-
     const existingPost = mockPosts[postIndex];
     const now = new Date().toISOString();
 
-    const updatedPost: Post = {
+    // Update post without storing author name - it will be derived dynamically
+    const updatedPost: Omit<Post, "author"> = {
       ...existingPost,
       title,
       content,
-      author,
       authorId,
       updatedAt: now,
     };
 
-    mockPosts[postIndex] = updatedPost;
+    mockPosts[postIndex] = updatedPost as Post;
 
-    return NextResponse.json(updatedPost);
+    // Return enriched post with current author name
+    const enrichedPost = enrichPostWithAuthor(updatedPost);
+    return NextResponse.json(enrichedPost);
   } catch (error) {
     return NextResponse.json(
       { error: "Invalid request body" },

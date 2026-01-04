@@ -92,9 +92,12 @@ export function useUpdateUser(id: string) {
       );
     },
     onSettled: () => {
-      // Optionally refetch to ensure consistency
+      // Invalidate queries to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["user", id] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      // Invalidate posts queries so they refetch with updated author names
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post"] });
     },
   });
 }
