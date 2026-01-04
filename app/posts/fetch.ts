@@ -71,3 +71,46 @@ export async function createPost(
   return response.json();
 }
 
+export type UpdatePostData = {
+  title: string;
+  content: string;
+  author: string;
+};
+
+export async function updatePost(
+  id: string,
+  data: UpdatePostData,
+  baseUrl?: string
+): Promise<Post> {
+  const url = baseUrl ? `${baseUrl}/api/posts/${id}` : `/api/posts/${id}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to update post" }));
+    throw new Error(error.error || "Failed to update post");
+  }
+
+  return response.json();
+}
+
+export async function deletePost(
+  id: string,
+  baseUrl?: string
+): Promise<void> {
+  const url = baseUrl ? `${baseUrl}/api/posts/${id}` : `/api/posts/${id}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to delete post" }));
+    throw new Error(error.error || "Failed to delete post");
+  }
+}
+

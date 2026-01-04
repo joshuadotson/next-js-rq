@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { mockPosts } from "@/lib/mock-data/posts";
+import { mockPosts, type Post } from "@/lib/mock-data/posts";
 
 // Simulate network delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,5 +22,79 @@ export async function GET(
   }
 
   return NextResponse.json(post);
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Simulate API delay (100-500ms)
+  await delay(Math.random() * 400 + 100);
+
+  const { id } = await params;
+  const postIndex = mockPosts.findIndex((p) => p.id === id);
+
+  if (postIndex === -1) {
+    return NextResponse.json(
+      { error: "Post not found" },
+      { status: 404 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { title, content, author } = body;
+
+    if (!title || !content || !author) {
+      return NextResponse.json(
+        { error: "Missing required fields: title, content, author" },
+        { status: 400 }
+      );
+    }
+
+    const existingPost = mockPosts[postIndex];
+    const authorId = `user-${author.toLowerCase().replace(/\s+/g, "-")}`;
+    const now = new Date().toISOString();
+
+    const updatedPost: Post = {
+      ...existingPost,
+      title,
+      content,
+      author,
+      authorId,
+      updatedAt: now,
+    };
+
+    mockPosts[postIndex] = updatedPost;
+
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Simulate API delay (100-500ms)
+  await delay(Math.random() * 400 + 100);
+
+  const { id } = await params;
+  const postIndex = mockPosts.findIndex((p) => p.id === id);
+
+  if (postIndex === -1) {
+    return NextResponse.json(
+      { error: "Post not found" },
+      { status: 404 }
+    );
+  }
+
+  mockPosts.splice(postIndex, 1);
+
+  return NextResponse.json({ success: true }, { status: 200 });
 }
 
