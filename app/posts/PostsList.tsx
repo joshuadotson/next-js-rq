@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePosts } from "./usePosts";
+import { usePosts } from "./_hooks/usePosts";
 
 export function PostsList() {
   const { data, isLoading, error, refetch, isRefetching } = usePosts();

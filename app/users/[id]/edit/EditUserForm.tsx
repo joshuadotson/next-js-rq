@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useUpdateUser } from "../../useUpdateUser";
-import { useUser } from "../../useUser";
+import { useUpdateUser } from "./useUpdateUser";
+import { useUser } from "../../_hooks/useUser";
 
 export function EditUserForm({ id }: { id: string }) {
   const router = useRouter();

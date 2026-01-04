@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCreatePost } from "../useCreatePost";
-import { useUsers } from "@/app/users/useUsers";
+import { useCreatePost } from "./useCreatePost";
+import { useUsers } from "@/app/users/_hooks/useUsers";
 
 export default function NewPostPage() {
   const router = useRouter();

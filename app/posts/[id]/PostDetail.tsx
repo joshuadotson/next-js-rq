@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePost } from "../usePost";
-import { useDeletePost } from "../useDeletePost";
+import { usePost } from "../_hooks/usePost";
+import { useDeletePost } from "../_hooks/useDeletePost";
 
 export function PostDetail({ id }: { id: string }) {
   const { data: post, isLoading, error } = usePost(id);

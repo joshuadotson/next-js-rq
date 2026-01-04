@@ -18,7 +18,12 @@ alwaysApply: true
 - **Examples**: `app/posts/usePosts.ts`, `app/users/useUser.ts`, `app/products/useProduct.ts`
 - **Pattern**: Server state hooks are colocated with their route directory
 - **Prefetch Functions**: Server-side prefetch functions should also be colocated: `app/[route]/prefetch.ts`
-- **Grouping**: If a route has more than 3 hooks, group them in `app/[route]/_hooks/` (underscore prefix = private, not a route)
+- **Grouping**: 
+  - Use `_hooks/` at the **route root** (`app/[route]/_hooks/`) if there are more than 3 **shared hooks** (used across multiple pages in the route)
+  - Use `_hooks/` at the **action/page level** (`app/[route]/[action]/_hooks/`) if a specific action has more than 3 hooks specific to that action
+  - Otherwise, colocate hooks directly with their page for better discoverability
+  - **Shared hooks** (used in multiple places within the route) should be in `app/[route]/_hooks/`
+  - **Single-use hooks** (used only in one specific page) should be colocated with that page, unless that page has more than 3 hooks (then use `_hooks/` at that page level)
 - **Allowed patterns**: React Query, SWR, server actions, API route handlers
 
 ### UI/Component State
@@ -39,7 +44,10 @@ alwaysApply: true
 - ✅ **MUST** be cacheable and shareable across components
 - ✅ **MUST** be placed in route directories (e.g., `app/posts/usePosts.ts`)
 - ✅ **MUST** colocate prefetch functions with hooks: `app/[route]/prefetch.ts`
-- ✅ **MUST** group hooks in `_hooks/` subdirectory if route has more than 3 hooks
+- ✅ **MUST** use `_hooks/` at route root (`app/[route]/_hooks/`) if there are more than 3 shared hooks (used across multiple pages)
+- ✅ **MUST** use `_hooks/` at action/page level (`app/[route]/[action]/_hooks/`) if a specific action has more than 3 hooks specific to that action
+- ✅ **SHOULD** colocate single-use hooks directly with their page if that page has 3 or fewer hooks (e.g., `app/posts/new/useCreatePost.ts`)
+- ✅ **SHOULD** keep shared hooks (used in multiple pages) in `app/[route]/_hooks/` for consistency
 - ❌ **NEVER** use `useState` for server-fetched data
 - ❌ **NEVER** mix server state with UI state in the same hook
 - ❌ **NEVER** place server state hooks in component files
@@ -94,15 +102,23 @@ alwaysApply: true
   - `app/users/useUser.ts` exports `useUser`
   - `app/product-catalog/useProductCatalog.ts` exports `useProductCatalog`
 - **Multiple hooks per route**: 
-  - If 3 or fewer hooks: place directly in route directory
+  - If 3 or fewer hooks total: place directly in route directory
     - `app/posts/usePosts.ts` (list)
     - `app/posts/usePost.ts` (single)
     - `app/posts/usePostMutation.ts` (mutation)
-  - If more than 3 hooks: group in `_hooks/` subdirectory
-    - `app/posts/_hooks/usePosts.ts`
-    - `app/posts/_hooks/usePost.ts`
-    - `app/posts/_hooks/usePostMutation.ts`
-    - `app/posts/_hooks/usePostComments.ts`
+  - If more than 3 **shared hooks** (used across multiple pages): group in route root `_hooks/`
+    - `app/posts/_hooks/usePosts.ts` (used in list page, could be used elsewhere)
+    - `app/posts/_hooks/usePost.ts` (used in detail and edit pages)
+    - `app/posts/_hooks/useDeletePost.ts` (used in detail page, could be used elsewhere)
+  - **Single-use hooks** (used only in one specific page):
+    - If that page has 3 or fewer hooks: colocate directly with the page
+      - `app/posts/new/useCreatePost.ts` (only used in `/posts/new`, 1 hook total)
+      - `app/posts/[id]/edit/useUpdatePost.ts` (only used in `/posts/[id]/edit`, 1 hook total)
+    - If that page has more than 3 hooks: use `_hooks/` at that page level
+      - `app/posts/[id]/edit/_hooks/useUpdatePost.ts`
+      - `app/posts/[id]/edit/_hooks/usePostValidation.ts`
+      - `app/posts/[id]/edit/_hooks/usePostHistory.ts`
+      - `app/posts/[id]/edit/_hooks/usePostPermissions.ts`
 - **Prefetch functions**: Always colocate with route
   - `app/posts/prefetch.ts` (contains `prefetchPosts`, `prefetchPost`, etc.)
 
@@ -141,11 +157,20 @@ export function useUser(userId: string) {
   });
 }
 
-// If more than 3 hooks, group in _hooks/:
-// app/posts/_hooks/usePosts.ts
-// app/posts/_hooks/usePost.ts
-// app/posts/_hooks/usePostMutation.ts
-// app/posts/_hooks/usePostComments.ts
+// Route-level _hooks/ for shared hooks (more than 3 shared hooks):
+// app/posts/_hooks/usePosts.ts (used in multiple places)
+// app/posts/_hooks/usePost.ts (used in detail and edit pages)
+// app/posts/_hooks/useDeletePost.ts (used in detail page)
+
+// Page-level colocation (3 or fewer hooks for that page):
+// app/posts/new/useCreatePost.ts (only used in /posts/new, 1 hook)
+// app/posts/[id]/edit/useUpdatePost.ts (only used in /posts/[id]/edit, 1 hook)
+
+// Page-level _hooks/ (more than 3 hooks specific to that action):
+// app/posts/[id]/edit/_hooks/useUpdatePost.ts
+// app/posts/[id]/edit/_hooks/usePostValidation.ts
+// app/posts/[id]/edit/_hooks/usePostHistory.ts
+// app/posts/[id]/edit/_hooks/usePostPermissions.ts
 ```
 
 ### ✅ CORRECT: UI State

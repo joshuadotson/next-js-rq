@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useUser } from "../useUser";
-import { useDeleteUser } from "../useDeleteUser";
+import { useUser } from "../_hooks/useUser";
+import { useDeleteUser } from "../_hooks/useDeleteUser";
 
 export function UserDetail({ id }: { id: string }) {
   const { data: user, isLoading, error } = useUser(id);

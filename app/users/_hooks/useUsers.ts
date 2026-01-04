@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsers, type UsersParams } from "./fetch";
+import { fetchUsers, type UsersParams } from "../fetch";
 
 export function useUsers(params?: UsersParams) {
   // Normalize params for query key - filter out undefined values

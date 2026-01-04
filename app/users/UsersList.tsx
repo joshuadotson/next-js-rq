@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useUsers } from "./useUsers";
+import { useUsers } from "./_hooks/useUsers";
 
 export function UsersList() {
   const { data, isLoading, error, refetch, isRefetching } = useUsers();

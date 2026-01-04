@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { deleteUser } from "./fetch";
-import type { UsersResponse } from "./fetch";
+import { deleteUser } from "../fetch";
+import type { UsersResponse } from "../fetch";
 import type { User } from "@/lib/mock-data/users";
 
 export function useDeleteUser() {

@@ -2,8 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { deletePost } from "./fetch";
-import type { PostsResponse } from "./fetch";
+import { deletePost } from "../fetch";
+import type { PostsResponse } from "../fetch";
 import type { Post } from "@/lib/mock-data/posts";
 
 export function useDeletePost() {

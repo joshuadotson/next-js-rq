@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useUpdatePost } from "../../useUpdatePost";
-import { usePost } from "../../usePost";
-import { useUsers } from "@/app/users/useUsers";
+import { useUpdatePost } from "./useUpdatePost";
+import { usePost } from "../../_hooks/usePost";
+import { useUsers } from "@/app/users/_hooks/useUsers";
 
 export function EditPostForm({ id }: { id: string }) {
   const router = useRouter();
