@@ -1,4 +1,11 @@
-export default function ProductsPage() {
+import { HydrationBoundary } from "@tanstack/react-query";
+import { prefetchProducts } from "./prefetch";
+import { ProductsList } from "./ProductsList";
+
+export default async function ProductsPage() {
+  // Prefetch on the server
+  const dehydratedState = await prefetchProducts();
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -10,15 +17,12 @@ export default function ProductsPage() {
           <code className="bg-zinc-200 dark:bg-zinc-800 px-2 py-1 rounded">
             app/products/
           </code>
+          . Data is prefetched on the server and hydrated on the client with no
+          duplication.
         </p>
-        <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-            Product Catalog
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Products will be displayed here using server state hooks.
-          </p>
-        </div>
+        <HydrationBoundary state={dehydratedState}>
+          <ProductsList />
+        </HydrationBoundary>
       </div>
     </div>
   );
