@@ -91,7 +91,7 @@ export async function PUT(
     // Return enriched post with current author name
     const enrichedPost = enrichPostWithAuthor(updatedPost);
     return NextResponse.json(enrichedPost);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }

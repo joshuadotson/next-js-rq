@@ -83,7 +83,7 @@ export function UserDetail({ id }: { id: string }) {
               Delete User
             </h2>
             <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-              Are you sure you want to delete "{user.firstName} {user.lastName}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{user.firstName} {user.lastName}&quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button

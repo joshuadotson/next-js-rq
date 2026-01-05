@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     // Return enriched post with current author name
     const enrichedPost = enrichPostWithAuthor(newPost);
     return NextResponse.json(enrichedPost, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }

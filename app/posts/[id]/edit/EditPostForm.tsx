@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUpdatePost } from "../../_hooks/useUpdatePost";
@@ -12,18 +12,11 @@ export function EditPostForm({ id }: { id: string }) {
   const { data: post, isLoading: isLoadingPost } = usePost(id);
   const { mutate, isPending, error } = useUpdatePost(id);
   const { data: usersData, isLoading: isLoadingUsers } = useUsers();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [authorId, setAuthorId] = useState("");
-
-  // Pre-populate form when post data is loaded
-  useEffect(() => {
-    if (post) {
-      setTitle(post.title);
-      setContent(post.content);
-      setAuthorId(post.authorId);
-    }
-  }, [post]);
+  // Initialize form state with post data when available
+  // Using key prop on form to reset when post changes, avoiding setState in useEffect
+  const [title, setTitle] = useState(post?.title ?? "");
+  const [content, setContent] = useState(post?.content ?? "");
+  const [authorId, setAuthorId] = useState(post?.authorId ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +57,7 @@ export function EditPostForm({ id }: { id: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form key={post.id} onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
           htmlFor="title"

@@ -83,7 +83,7 @@ export function ProductDetail({ id }: { id: string }) {
               Delete Product
             </h2>
             <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-              Are you sure you want to delete "{product.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button

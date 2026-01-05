@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUpdateProduct } from "../../_hooks/useUpdateProduct";
@@ -10,16 +10,10 @@ export function EditProductForm({ id }: { id: string }) {
   const router = useRouter();
   const { data: product, isLoading: isLoadingProduct } = useProduct(id);
   const { mutate, isPending, error } = useUpdateProduct(id);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-
-  // Pre-populate form when product data is loaded
-  useEffect(() => {
-    if (product) {
-      setName(product.name);
-      setDescription(product.description);
-    }
-  }, [product]);
+  // Initialize form state with product data when available
+  // Using key prop on form to reset when product changes, avoiding setState in useEffect
+  const [name, setName] = useState(product?.name ?? "");
+  const [description, setDescription] = useState(product?.description ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +54,7 @@ export function EditProductForm({ id }: { id: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form key={product.id} onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
           htmlFor="name"

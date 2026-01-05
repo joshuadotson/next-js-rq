@@ -16,7 +16,8 @@ function normalizeParams<T extends Record<string, unknown>>(
   if (!params) return undefined;
 
   const normalized = Object.fromEntries(
-    Object.entries(params).filter(([_, value]) => value !== undefined)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Object.entries(params).filter(([_key, value]) => value !== undefined)
   ) as T;
 
   // Return undefined if all values were filtered out

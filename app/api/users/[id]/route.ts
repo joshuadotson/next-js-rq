@@ -84,7 +84,7 @@ export async function PUT(
     mockUsers[userIndex] = updatedUser;
 
     return NextResponse.json(updatedUser);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }

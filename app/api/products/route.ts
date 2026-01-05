@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     mockProducts.unshift(newProduct);
 
     return NextResponse.json(newProduct, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }

@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     mockUsers.push(newUser);
 
     return NextResponse.json(newUser, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }

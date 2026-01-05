@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUpdateUser } from "../../_hooks/useUpdateUser";
@@ -10,18 +10,11 @@ export function EditUserForm({ id }: { id: string }) {
   const router = useRouter();
   const { data: user, isLoading: isLoadingUser } = useUser(id);
   const { mutate, isPending, error } = useUpdateUser(id);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-
-  // Pre-populate form when user data is loaded
-  useEffect(() => {
-    if (user) {
-      setFirstName(user.firstName);
-      setLastName(user.lastName);
-      setEmail(user.email);
-    }
-  }, [user]);
+  // Initialize form state with user data when available
+  // Using key prop on form to reset when user changes, avoiding setState in useEffect
+  const [firstName, setFirstName] = useState(user?.firstName ?? "");
+  const [lastName, setLastName] = useState(user?.lastName ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +59,7 @@ export function EditUserForm({ id }: { id: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form key={user.id} onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
           htmlFor="firstName"
