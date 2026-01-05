@@ -364,5 +364,92 @@ test.describe("Posts E2E", () => {
       await expect(page).toHaveURL("/posts");
     }
   });
+
+  test("should show updated post in list after editing", async ({ page }) => {
+    // Create a post
+    await page.goto("/users");
+    await page.waitForSelector('text=Loading users...', { state: "hidden" });
+    const firstUserLink = page.locator('a[href^="/users/"]').first();
+    let userHref = await firstUserLink.getAttribute("href");
+    let userId = userHref?.replace("/users/", "") || "";
+    
+    await navigateToNewPost(page);
+    const authorSelect = page.locator('select[id="authorId"]');
+    await authorSelect.waitFor({ state: "attached" });
+    await page.waitForFunction(
+      () => {
+        const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+        if (!select) return false;
+        return !select.disabled && select.options.length > 1;
+      },
+      { timeout: 20000 }
+    );
+    const optionExists = await page.evaluate((userId) => {
+      const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+      if (!select) return false;
+      return Array.from(select.options).some(opt => opt.value === userId);
+    }, userId);
+    if (!optionExists) {
+      const firstOptionValue = await page.evaluate(() => {
+        const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+        if (!select || select.options.length < 2) return null;
+        return select.options[1].value;
+      });
+      if (firstOptionValue) userId = firstOptionValue;
+    }
+    
+    const testPost = generateTestPost();
+    await fillPostForm(page, {
+      title: testPost.title,
+      content: testPost.content,
+      authorId: userId,
+    });
+    await submitForm(page);
+    await page.waitForURL("/posts");
+    
+    // Verify original title appears in list
+    await page.waitForSelector('text=Loading posts...', { state: "hidden" });
+    await expect(page.locator(`text=${testPost.title}`)).toBeVisible();
+    
+    // Get post ID and navigate to edit
+    const postLink = page.locator('a[href^="/posts/"]').filter({ hasText: testPost.title });
+    const postHref = await postLink.getAttribute("href");
+    const postId = postHref?.replace("/posts/", "").split("/")[0] || "";
+    expect(postId).toBeTruthy();
+    
+    await postLink.click();
+    await page.waitForURL(`/posts/${postId}`, { timeout: 10000 });
+    await page.waitForSelector('h1', { state: "visible", timeout: 10000 });
+    await page.waitForSelector('a[href*="/edit"]', { state: "visible", timeout: 10000 });
+    await page.click('a[href*="/edit"]');
+    
+    await expect(page).toHaveURL(`/posts/${postId}/edit`);
+    
+    // Update the title
+    const newTitle = `Updated Title ${Date.now()}`;
+    const editAuthorSelect = page.locator('select[id="authorId"]');
+    const authorId = await editAuthorSelect.inputValue();
+    
+    await fillPostForm(page, {
+      title: newTitle,
+      content: "Updated content",
+      authorId: authorId,
+    });
+    
+    await submitForm(page);
+    
+    // Verify in detail page
+    await expect(page).toHaveURL(`/posts/${postId}`);
+    await expect(page.locator("h1")).toContainText(newTitle);
+    
+    // Navigate to list and verify updated title appears
+    await page.click('text=← Back to Posts');
+    await expect(page).toHaveURL("/posts");
+    await page.waitForSelector('text=Loading posts...', { state: "hidden" });
+    await expect(page.locator(`text=${newTitle}`)).toBeVisible();
+    
+    // Verify old title is gone
+    await expect(page.locator(`text=${testPost.title}`)).not.toBeVisible();
+  });
 });
 

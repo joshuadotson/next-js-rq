@@ -158,5 +158,58 @@ test.describe("Products E2E", () => {
       await expect(page).toHaveURL("/products");
     }
   });
+
+  test("should show updated product in list after editing", async ({ page }) => {
+    // Create a product
+    await navigateToNewProduct(page);
+    
+    const testProduct = generateTestProduct();
+    await fillProductForm(page, {
+      name: testProduct.name,
+      description: testProduct.description,
+    });
+    await submitForm(page);
+    await page.waitForURL("/products");
+    
+    // Verify original name appears in list
+    await page.waitForSelector('text=Loading products...', { state: "hidden" });
+    await expect(page.locator(`text=${testProduct.name}`)).toBeVisible();
+    
+    // Get product ID and navigate to edit
+    const productLink = page.locator('a[href^="/products/"]').filter({ hasText: testProduct.name });
+    const productHref = await productLink.getAttribute("href");
+    const productId = productHref?.replace("/products/", "").split("/")[0] || "";
+    expect(productId).toBeTruthy();
+    
+    await productLink.click();
+    await page.waitForURL(`/products/${productId}`, { timeout: 10000 });
+    await page.waitForSelector('h1', { state: "visible", timeout: 10000 });
+    await page.waitForSelector('a[href*="/edit"]', { state: "visible", timeout: 10000 });
+    await page.click('a[href*="/edit"]');
+    
+    await expect(page).toHaveURL(`/products/${productId}/edit`);
+    
+    // Update the product
+    const newName = `Updated Product ${Date.now()}`;
+    await fillProductForm(page, {
+      name: newName,
+      description: "Updated description",
+    });
+    
+    await submitForm(page);
+    
+    // Verify in detail page
+    await expect(page).toHaveURL(`/products/${productId}`);
+    await expect(page.locator("h1")).toContainText(newName);
+    
+    // Navigate to list and verify updated name appears
+    await page.click('text=← Back to Products');
+    await expect(page).toHaveURL("/products");
+    await page.waitForSelector('text=Loading products...', { state: "hidden" });
+    await expect(page.locator(`text=${newName}`)).toBeVisible();
+    
+    // Verify old name is gone
+    await expect(page.locator(`text=${testProduct.name}`)).not.toBeVisible();
+  });
 });
 

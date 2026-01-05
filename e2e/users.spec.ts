@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { navigateToUsers, navigateToNewUser, navigateToUserDetail } from "./helpers/navigation";
-import { fillUserForm, submitForm } from "./helpers/forms";
-import { generateTestUser } from "./fixtures/test-data";
+import { fillUserForm, submitForm, fillPostForm } from "./helpers/forms";
+import { generateTestUser, generateTestPost } from "./fixtures/test-data";
 
 test.describe("Users E2E", () => {
   test("should navigate to users list from home", async ({ page }) => {
@@ -181,6 +181,173 @@ test.describe("Users E2E", () => {
       await page.click('text=← Back to Users');
       await expect(page).toHaveURL("/users");
     }
+  });
+
+  test("should show updated user in list after editing", async ({ page }) => {
+    // Create a user
+    await navigateToNewUser(page);
+    
+    const testUser = generateTestUser();
+    await fillUserForm(page, {
+      firstName: testUser.firstName,
+      lastName: testUser.lastName,
+      email: testUser.email,
+    });
+    await submitForm(page);
+    await page.waitForURL("/users");
+    
+    // Verify original name appears in list
+    await page.waitForSelector('text=Loading users...', { state: "hidden" });
+    const originalName = `${testUser.firstName} ${testUser.lastName}`;
+    await expect(page.locator(`a:has-text("${originalName}")`)).toBeVisible();
+    
+    // Get user ID and navigate to edit
+    const userLink = page.locator('a[href^="/users/"]').filter({ hasText: testUser.firstName });
+    const userHref = await userLink.getAttribute("href");
+    const userId = userHref?.replace("/users/", "").split("/")[0] || "";
+    expect(userId).toBeTruthy();
+    
+    await userLink.click();
+    await page.waitForURL(`/users/${userId}`, { timeout: 10000 });
+    await page.waitForSelector('h1', { state: "visible", timeout: 10000 });
+    await page.waitForSelector('a[href*="/edit"]', { state: "visible", timeout: 10000 });
+    await page.click('a[href*="/edit"]');
+    
+    await expect(page).toHaveURL(`/users/${userId}/edit`);
+    
+    // Update the user
+    const newFirstName = `Updated${Date.now()}`;
+    const newLastName = "NewLastName";
+    const updatedName = `${newFirstName} ${newLastName}`;
+    
+    await fillUserForm(page, {
+      firstName: newFirstName,
+      lastName: newLastName,
+      email: testUser.email,
+    });
+    
+    await submitForm(page);
+    
+    // Verify in detail page
+    await expect(page).toHaveURL(`/users/${userId}`);
+    await expect(page.locator("h1, h2")).toContainText(newFirstName);
+    
+    // Navigate to list and verify updated name appears
+    await page.click('text=← Back to Users');
+    await expect(page).toHaveURL("/users");
+    await page.waitForSelector('text=Loading users...', { state: "hidden" });
+    await expect(page.locator(`a:has-text("${updatedName}")`)).toBeVisible();
+    
+    // Verify old name is gone
+    await expect(page.locator(`a:has-text("${originalName}")`)).not.toBeVisible();
+  });
+
+  test("should show updated user name in posts after editing user", async ({ page }) => {
+    // 1. Create a user
+    await navigateToNewUser(page);
+    
+    const testUser = generateTestUser();
+    await fillUserForm(page, {
+      firstName: testUser.firstName,
+      lastName: testUser.lastName,
+      email: testUser.email,
+    });
+    await submitForm(page);
+    await page.waitForURL("/users");
+    
+    // Get user ID
+    const userLink = page.locator('a[href^="/users/"]').filter({ 
+      hasText: testUser.firstName 
+    });
+    const userHref = await userLink.getAttribute("href");
+    const userId = userHref?.replace("/users/", "").split("/")[0] || "";
+    const originalName = `${testUser.firstName} ${testUser.lastName}`;
+    
+    // 2. Create a post authored by that user
+    await page.goto("/posts/new");
+    const authorSelect = page.locator('select[id="authorId"]');
+    await authorSelect.waitFor({ state: "attached" });
+    await page.waitForFunction(
+      () => {
+        const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+        if (!select) return false;
+        return !select.disabled && select.options.length > 1;
+      },
+      { timeout: 20000 }
+    );
+    
+    // Check if the userId option exists, if not use the first available option
+    const optionExists = await page.evaluate((userId) => {
+      const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+      if (!select) return false;
+      return Array.from(select.options).some(opt => opt.value === userId);
+    }, userId);
+    
+    let finalUserId = userId;
+    if (!optionExists) {
+      const firstOptionValue = await page.evaluate(() => {
+        const select = document.querySelector('select[id="authorId"]') as HTMLSelectElement;
+        if (!select || select.options.length < 2) return null;
+        return select.options[1].value;
+      });
+      if (firstOptionValue) {
+        finalUserId = firstOptionValue;
+      }
+    }
+    
+    const testPost = generateTestPost();
+    
+    await fillPostForm(page, {
+      title: testPost.title,
+      content: testPost.content,
+      authorId: finalUserId,
+    });
+    await submitForm(page);
+    await page.waitForURL("/posts");
+    
+    // 3. Verify original author name in posts list
+    await page.waitForSelector('text=Loading posts...', { state: "hidden" });
+    const postCard = page.locator('a[href^="/posts/"]').filter({ 
+      hasText: testPost.title 
+    });
+    await expect(postCard.locator(`text=By ${originalName}`)).toBeVisible();
+    
+    // 4. Verify original author name in post detail
+    const postHref = await postCard.getAttribute("href");
+    const postId = postHref?.replace("/posts/", "").split("/")[0] || "";
+    await postCard.click();
+    await page.waitForURL(`/posts/${postId}`, { timeout: 10000 });
+    await expect(page.locator(`text=By ${originalName}`)).toBeVisible();
+    
+    // 5. Edit the user's name
+    await page.goto(`/users/${userId}/edit`);
+    const newFirstName = `Updated${Date.now()}`;
+    const newLastName = "NewLastName";
+    const updatedName = `${newFirstName} ${newLastName}`;
+    
+    await fillUserForm(page, {
+      firstName: newFirstName,
+      lastName: newLastName,
+      email: testUser.email,
+    });
+    await submitForm(page);
+    await page.waitForURL(`/users/${userId}`);
+    
+    // 6. Navigate to posts list - verify updated author name
+    await page.goto("/posts");
+    await page.waitForSelector('text=Loading posts...', { state: "hidden" });
+    const updatedPostCard = page.locator('a[href^="/posts/"]').filter({ 
+      hasText: testPost.title 
+    });
+    await expect(updatedPostCard.locator(`text=By ${updatedName}`)).toBeVisible();
+    
+    // 7. Navigate to post detail - verify updated author name
+    await updatedPostCard.click();
+    await page.waitForURL(`/posts/${postId}`, { timeout: 10000 });
+    await expect(page.locator(`text=By ${updatedName}`)).toBeVisible();
+    
+    // Verify old name is gone
+    await expect(page.locator(`text=By ${originalName}`)).not.toBeVisible();
   });
 });
 
