@@ -9,6 +9,134 @@ Next RQ is a demonstration application showcasing how to integrate [TanStack Que
 - **Optimistic updates**: Mutations use optimistic updates for instant UI feedback
 - **API routes**: Next.js API routes provide a mock backend for posts data
 
+## How It Works
+
+The integration relies on several key mechanisms working together:
+
+### 1. Server-Side Prefetching with `prefetchQuery`
+
+The core mechanism is React Query's `prefetchQuery` method, which fetches data on the server before the page renders:
+
+```typescript
+// Server component prefetches data
+const dehydratedState = await prefetchPosts();
+
+// Prefetch function uses prefetchQuery
+await queryClient.prefetchQuery({
+  queryKey: ["posts"],
+  queryFn: () => fetchPosts(params, baseUrl),
+});
+```
+
+This ensures data is available **before** the client components mount, eliminating loading states.
+
+### 2. Dehydration and Hydration
+
+The prefetched cache is serialized (dehydrated) on the server and sent to the client:
+
+```typescript
+// Server: Dehydrate the cache
+return dehydrate(queryClient);
+
+// Client: Hydrate the cache via HydrationBoundary
+<HydrationBoundary state={dehydratedState}>
+  <PostsList />
+</HydrationBoundary>
+```
+
+The `HydrationBoundary` component hydrates the client's query cache **before** child components render, so `useQuery` hooks immediately find the data.
+
+### 3. Query Key Consistency
+
+Both server prefetch and client hooks must use **identical query keys**:
+
+```typescript
+// Server prefetch
+const queryKey = createQueryKey("posts", params);
+
+// Client hook
+const queryKey = createQueryKey("posts", params); // Same key!
+```
+
+The `createQueryKey` utility ensures consistent normalization, preventing cache mismatches.
+
+### 4. Dual Query Client Pattern
+
+- **Server**: Creates a new `QueryClient` per request (request isolation)
+- **Client**: Uses a singleton `QueryClient` (state persistence)
+
+This pattern ensures server requests are isolated while the client maintains cache across navigation.
+
+### 5. Stale Time Configuration
+
+Setting `staleTime: 60 * 1000` prevents React Query from immediately refetching on the client:
+
+```typescript
+new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // Data is fresh for 1 minute
+    },
+  },
+});
+```
+
+Since the prefetched data is considered "fresh", React Query uses it from cache instead of making a duplicate request.
+
+### The Result
+
+When a client component calls `useQuery`, React Query:
+1. Checks the cache for matching query key
+2. Finds the prefetched data (hydrated from server)
+3. Sees the data is fresh (within `staleTime`)
+4. **Returns immediately** - no network request needed! ✅
+
+This creates a seamless experience: data appears instantly with zero duplicate requests.
+
+### Verification
+
+You can verify this is working by checking a few things:
+
+#### 1. React Query Devtools
+
+Open the React Query Devtools (floating icon in the bottom corner) and navigate to `/posts`:
+
+- **Queries tab**: You'll see `["posts"]` with data already cached
+- **Status**: Shows as "fresh" (not "fetching" or "stale")
+- **Data**: The posts data is immediately visible
+
+This confirms the data was prefetched on the server and hydrated on the client.
+
+#### 2. Network Tab
+
+Open your browser's DevTools Network tab and navigate to `/posts`:
+
+- **Initial load**: You'll see the HTML page request
+- **No `/api/posts` request**: The data was already fetched on the server!
+- **Subsequent navigation**: If you navigate away and back within the `staleTime` window, still no `/api/posts` request (though you'll see the RSC payload request, which is expected for Next.js navigation)
+
+This proves there are **zero duplicate API requests** - the client uses the prefetched data from the server.
+
+#### 3. No Loading States
+
+When you navigate to `/posts`:
+
+- **No loading spinner**: The posts list appears immediately
+- **No skeleton screens**: Content is visible right away
+- **Instant rendering**: The UI is fully populated on first render
+
+This demonstrates that `useQuery` found the data in cache and returned it synchronously.
+
+#### 4. Server Logs
+
+Check your Next.js server console when navigating to `/posts`:
+
+- You'll see the server-side fetch happening during SSR
+- The client receives the HTML with the dehydrated state embedded
+- No client-side fetch occurs after hydration
+
+**Try it yourself**: Navigate to `/posts`, open DevTools, and verify there's no `/api/posts` request in the Network tab! 🎯
+
 ### Features
 
 - **Posts Management**: Full CRUD operations - browse, view, create, edit, and delete posts with filtering and pagination support
