@@ -38,9 +38,14 @@ Prefetch functions are server-only functions that fetch data and prepare it for 
 export async function prefetchPosts(params?: PostsParams) {
   const queryClient = getQueryClient(); // Gets server query client
   
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  
+  const queryKey = createQueryKey("posts", params);
+  
   await queryClient.prefetchQuery({
-    queryKey: ["posts", params],
-    queryFn: () => fetchPosts(params, baseUrl),
+    queryKey,
+    queryFn: (): Promise<PostsResponse> => fetchPosts(params, baseUrl),
   });
   
   return dehydrate(queryClient); // Serialize cache for client
@@ -49,7 +54,7 @@ export async function prefetchPosts(params?: PostsParams) {
 
 **Important details:**
 - Uses `baseUrl` to make absolute requests (required for server-side fetch)
-- Normalizes params to ensure consistent query keys
+- Uses `createQueryKey` utility to ensure consistent query keys
 - Returns dehydrated state (serialized cache)
 
 ### Step 2: Server Component Prefetch
@@ -96,23 +101,23 @@ React Query checks the cache first. It finds data with matching key, sees it's n
 
 ## Query Key Consistency
 
-This is why query key normalization is critical:
+This is why query key normalization is critical. Both the prefetch function and the hook use the `createQueryKey` utility:
 
 ```typescript:app/posts/_hooks/usePosts.ts
-const normalizedParams = params
-  ? Object.fromEntries(
-      Object.entries(params).filter(([_, value]) => value !== undefined)
-    )
-  : undefined;
+export function usePosts(params?: PostsParams) {
+  const queryKey = createQueryKey("posts", params);
 
-const queryKey = normalizedParams
-  ? ["posts", normalizedParams]
-  : ["posts"];
+  return useQuery({
+    queryKey,
+    queryFn: () => fetchPosts(params),
+  });
+}
 ```
 
-Both the prefetch function and the hook use the same normalization logic, ensuring:
+The `createQueryKey` utility ensures consistent normalization:
 - `{ limit: 10, offset: 0 }` → `["posts", { limit: 10, offset: 0 }]`
 - `{ limit: 10, offset: 0, authorId: undefined }` → `["posts", { limit: 10, offset: 0 }]`
+- `undefined` → `["posts"]`
 
 This guarantees the keys match between server and client.
 

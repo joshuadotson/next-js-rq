@@ -29,7 +29,7 @@ Optimistic updates allow the UI to update **immediately** when a mutation is tri
 
 ### The Mutation Hook
 
-```typescript:app/posts/new/useCreatePost.ts
+```typescript:app/posts/_hooks/useCreatePost.ts
 export function useCreatePost() {
   const queryClient = useQueryClient();
   
@@ -163,7 +163,7 @@ This application also uses optimistic updates for **update** and **delete** oper
 
 The `useUpdatePost` hook updates both the individual post cache and all posts list caches:
 
-```typescript:app/posts/[id]/edit/useUpdatePost.ts
+```typescript:app/posts/_hooks/useUpdatePost.ts
 onMutate: async (updatedData) => {
   // Cancel queries
   await queryClient.cancelQueries({ queryKey: ["post", id] });

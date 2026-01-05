@@ -21,6 +21,8 @@ app/
     _hooks/               # Shared hooks (used in multiple pages)
       usePosts.ts         # List query hook - shared!
       usePost.ts          # Single post hook - shared!
+      useCreatePost.ts    # Create mutation hook - shared!
+      useUpdatePost.ts    # Update mutation hook - shared!
       useDeletePost.ts    # Delete mutation hook - shared!
     prefetch.ts           # Prefetch functions - colocated!
     fetch.ts              # Fetch functions - colocated!
@@ -30,16 +32,14 @@ app/
       edit/
         page.tsx          # Server component for edit page
         EditPostForm.tsx  # Client component for edit form
-        useUpdatePost.ts  # Update mutation hook - colocated with edit page!
     new/
       page.tsx            # Client component for create form
-      useCreatePost.ts    # Create mutation hook - colocated with new page!
 ```
 
 **Organization Pattern:**
 - **Shared hooks** (used in multiple pages) → `app/[route]/_hooks/`
-- **Single-use hooks** (used only in one page) → Colocated directly with that page
-- If a specific page has more than 3 hooks, use `app/[route]/[action]/_hooks/`
+- All mutation hooks (create, update, delete) are typically shared and placed in `_hooks/`
+- If a specific page has more than 3 page-specific hooks, use `app/[route]/[action]/_hooks/`
 
 ## Server State Hooks
 
@@ -51,15 +51,7 @@ Server state hooks are thin wrappers around `useQuery` that:
 
 ```typescript:app/posts/_hooks/usePosts.ts
 export function usePosts(params?: PostsParams) {
-  const normalizedParams = params
-    ? Object.fromEntries(
-        Object.entries(params).filter(([_, value]) => value !== undefined)
-      )
-    : undefined;
-
-  const queryKey = normalizedParams
-    ? ["posts", normalizedParams]
-    : ["posts"];
+  const queryKey = createQueryKey("posts", params);
 
   return useQuery({
     queryKey,
@@ -79,7 +71,7 @@ Mutation hooks wrap `useMutation` and handle cache updates. This application inc
 
 ### Create Mutation
 
-```typescript:app/posts/new/useCreatePost.ts
+```typescript:app/posts/_hooks/useCreatePost.ts
 export function useCreatePost() {
   const queryClient = useQueryClient();
   
@@ -100,7 +92,7 @@ export function useCreatePost() {
 
 ### Update Mutation
 
-```typescript:app/posts/[id]/edit/useUpdatePost.ts
+```typescript:app/posts/_hooks/useUpdatePost.ts
 export function useUpdatePost(id: string) {
   const queryClient = useQueryClient();
   
@@ -179,9 +171,14 @@ Prefetch functions are server-only functions that prepare data for hydration:
 export async function prefetchPosts(params?: PostsParams) {
   const queryClient = getQueryClient();
   
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  
+  const queryKey = createQueryKey("posts", params);
+  
   await queryClient.prefetchQuery({
-    queryKey: ["posts", params],
-    queryFn: () => fetchPosts(params, baseUrl),
+    queryKey,
+    queryFn: (): Promise<PostsResponse> => fetchPosts(params, baseUrl),
   });
   
   return dehydrate(queryClient);
@@ -190,7 +187,7 @@ export async function prefetchPosts(params?: PostsParams) {
 
 **Key points:**
 - Server-only (uses `getQueryClient()` which returns server client)
-- Uses same query keys as hooks (ensures cache match)
+- Uses `createQueryKey` utility to ensure same query keys as hooks (ensures cache match)
 - Uses `baseUrl` for absolute fetch URLs
 
 ## Component Usage
@@ -248,23 +245,20 @@ store/
 
 ## Hook Organization Strategy
 
-This application uses a **hybrid colocation pattern**:
+This application uses a **shared hooks pattern**:
 
-1. **Shared hooks** (used in multiple pages) are grouped in `_hooks/` subdirectories at the route level
+1. **Shared hooks** (used in multiple pages or components) are grouped in `_hooks/` subdirectories at the route level
    - Example: `app/posts/_hooks/usePosts.ts`, `app/posts/_hooks/usePost.ts`
-   - Use this when there are more than 3 shared hooks in a route
+   - All mutation hooks (create, update, delete) are typically shared and placed here
+   - This includes hooks used by multiple pages or components within the route
 
-2. **Single-use hooks** (used only in one specific page) are colocated directly with that page
-   - Example: `app/posts/new/useCreatePost.ts`, `app/posts/[id]/edit/useUpdatePost.ts`
-   - Provides better discoverability - the hook is right next to where it's used
-
-3. **Action-level `_hooks/`** (if a specific action has more than 3 hooks)
-   - Example: `app/posts/[id]/edit/_hooks/` if the edit page had 4+ hooks
-   - Use this when a specific page/action has more than 3 hooks
+2. **Action-level `_hooks/`** (if a specific action has more than 3 page-specific hooks)
+   - Example: `app/posts/[id]/edit/_hooks/` if the edit page had 4+ page-specific hooks
+   - Use this when a specific page/action has more than 3 hooks that are only used on that page
 
 **Benefits:**
 - Shared hooks are easy to find in one place
-- Single-use hooks are discoverable next to their usage
+- Consistent organization across all routes
 - Clear separation between shared and page-specific logic
 - Scales well as features grow
 
