@@ -44,6 +44,7 @@ For detailed information about how this integration works, see:
 - **[Server-Side Prefetching](./docs/PREFETCHING.md)** - How prefetching and hydration work without duplicate requests
 - **[State Management Patterns](./docs/STATE_MANAGEMENT.md)** - Colocated hooks and organization strategy
 - **[Optimistic Updates](./docs/OPTIMISTIC_UPDATES.md)** - Implementing instant UI feedback with mutations
+- **[Testing Guide](./docs/TESTING.md)** - Comprehensive guide to unit, integration, and E2E testing
 
 ## Learn More
 
